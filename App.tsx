@@ -1,12 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { BLEService, ConnectedDevice, createBLEService } from './src/services';
 import { Device, UUID } from 'react-native-ble-plx';
 import { cloneDeep } from './src/utils/cloneDeep';
-import { MD3LightTheme as DefaultTheme, PaperProvider, List as PaperList, Divider, Button, Text, TextInput } from 'react-native-paper';
-import { Buffer } from 'buffer';
-import { lastValueFrom, take } from 'rxjs';
+import {
+  MD3LightTheme as DefaultTheme,
+  PaperProvider,
+  List as PaperList,
+  Divider,
+  Button,
+  Text,
+  TextInput,
+} from 'react-native-paper';
 
 const theme = {
   ...DefaultTheme,
@@ -17,21 +23,22 @@ const theme = {
   },
 };
 
-type DeviceExtendedByUpdateTime = Device & { updateTimestamp: number }
-const MIN_TIME_BEFORE_UPDATE_IN_MILLISECONDS = 5000
+type DeviceExtendedByUpdateTime = Device & { updateTimestamp: number };
+const MIN_TIME_BEFORE_UPDATE_IN_MILLISECONDS = 5000;
 
-const CarbonBlackShine2DeviceId = "3B015AD2-FBDC-7E47-4E4D-ECCFF8FBC20A";
-const CarbonBlackShine2ServiceUuid = "3DDA0001-957F-7D4A-34A6-74696673696D";
 const serviceUUID: UUID = '1809';
-const characteristicUUID: UUID = '2A1E';
 
 export default function App() {
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [foundDevices, setFoundDevices] = useState<DeviceExtendedByUpdateTime[]>([])
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [foundDevices, setFoundDevices] = useState<
+    DeviceExtendedByUpdateTime[]
+  >([]);
   const [connected, setConnected] = useState(false);
-  const [text, setText] = useState("");
-  const [intermediateTemperatureValue, setIntermediateTemperatureValue] = useState('');
-  const [temperatureMeasurementValue, setTemperatureMeasurementValue] = useState('');
+  const [text, setText] = useState('');
+  const [intermediateTemperatureValue, setIntermediateTemperatureValue] =
+    useState('');
+  const [temperatureMeasurementValue, setTemperatureMeasurementValue] =
+    useState('');
   const [temperatureTypeValue, setTemperatureTypeValue] = useState('');
   const [temperatureIntervalValue, setTemperatureIntervalValue] = useState('');
 
@@ -45,46 +52,53 @@ export default function App() {
     bleService?.scanDevices(addFoundDevice, [serviceUUID], true);
   }, []);
 
-  const isFoundDeviceUpdateNecessary = (currentDevices: DeviceExtendedByUpdateTime[], updatedDevice: Device) => {
-    const currentDevice = currentDevices.find(({ id }) => updatedDevice.id === id)
+  const isFoundDeviceUpdateNecessary = (
+    currentDevices: DeviceExtendedByUpdateTime[],
+    updatedDevice: Device
+  ) => {
+    const currentDevice = currentDevices.find(
+      ({ id }) => updatedDevice.id === id
+    );
     if (!currentDevice) {
-      return true
+      return true;
     }
-    return currentDevice.updateTimestamp < Date.now()
-  }
+    return currentDevice.updateTimestamp < Date.now();
+  };
 
   const addFoundDevice = (device: Device) => {
     if (!device.name && !device.localName) return;
-    setFoundDevices(prevState => {
+    setFoundDevices((prevState) => {
       if (!isFoundDeviceUpdateNecessary(prevState, device)) {
-        return prevState
+        return prevState;
       }
       // deep clone
-      const nextState = cloneDeep(prevState)
+      const nextState = cloneDeep(prevState);
       const extendedDevice: DeviceExtendedByUpdateTime = {
         ...device,
-        updateTimestamp: Date.now() + MIN_TIME_BEFORE_UPDATE_IN_MILLISECONDS
-      } as DeviceExtendedByUpdateTime
+        updateTimestamp: Date.now() + MIN_TIME_BEFORE_UPDATE_IN_MILLISECONDS,
+      } as DeviceExtendedByUpdateTime;
 
-      const indexToReplace = nextState.findIndex(currentDevice => currentDevice.id === device.id)
+      const indexToReplace = nextState.findIndex(
+        (currentDevice) => currentDevice.id === device.id
+      );
       if (indexToReplace === -1) {
-        return nextState.concat(extendedDevice)
+        return nextState.concat(extendedDevice);
       }
-      nextState[indexToReplace] = extendedDevice
-      return nextState
-    })
-  }
+      nextState[indexToReplace] = extendedDevice;
+      return nextState;
+    });
+  };
 
   const onConnectSuccess = (d: ConnectedDevice) => {
     setConnectedDevice(d);
-    setIsConnecting(false)
-    bleService.isDeviceConnected().then(connectionStatus => {
+    setIsConnecting(false);
+    bleService.isDeviceConnected().then((connectionStatus) => {
       if (!connectionStatus) {
-        throw new Error('isDeviceConnected error')
+        throw new Error('isDeviceConnected error');
       }
-      setConnected(connectionStatus)
-    })
-  }
+      setConnected(connectionStatus);
+    });
+  };
 
   const readIntermediateTemperature = async () => {
     if (!connectedDevice) {
@@ -94,7 +108,7 @@ export default function App() {
     setIntermediateTemperatureValue('');
     const value = await connectedDevice.readIntermediateTemperature();
     setIntermediateTemperatureValue(value);
-  }
+  };
 
   const readTemperatureMeasurement = async () => {
     if (!connectedDevice) {
@@ -104,17 +118,17 @@ export default function App() {
     setTemperatureMeasurementValue('');
     const value = await connectedDevice.readTemperatureMeasurement();
     setTemperatureMeasurementValue(value);
-  }
+  };
 
   const readTemperatureType = async () => {
     if (!connectedDevice) {
       console.error('isDeviceConnected error');
-      return
+      return;
     }
     setTemperatureTypeValue('');
     const value = await connectedDevice.readTemperatureType();
     setTemperatureTypeValue(value);
-  }
+  };
 
   const readTemperatureInterval = async () => {
     if (!connectedDevice) {
@@ -124,7 +138,7 @@ export default function App() {
     setTemperatureIntervalValue('');
     const value = await connectedDevice.readTemperatureInterval();
     setTemperatureIntervalValue(value);
-  }
+  };
 
   const writeIntermediateTemperature = async () => {
     if (!connectedDevice) {
@@ -132,9 +146,8 @@ export default function App() {
       return;
     }
     setIntermediateTemperatureValue('');
-    const value = await connectedDevice.writeIntermediateTemperature(Buffer.from(text).toString('base64'));
     // setIntermediateTemperatureValue(value);
-  }
+  };
 
   const monitorIntermediateTemperature = async () => {
     if (!connectedDevice) {
@@ -143,12 +156,12 @@ export default function App() {
     }
     connectedDevice.watchIntermediateTemperature().subscribe((value) => {
       setIntermediateTemperatureValue(value);
-    })
-  }
+    });
+  };
 
   const onConnectFail = () => {
-    setIsConnecting(false)
-  }
+    setIsConnecting(false);
+  };
 
   const deviceRender = (device: Device) => (
     <React.Fragment key={device.id}>
@@ -164,62 +177,145 @@ export default function App() {
           setTemperatureIntervalValue('');
           setTemperatureTypeValue('');
           setTemperatureMeasurementValue('');
-          bleService.connectToDevice(device.id).then(onConnectSuccess).catch(onConnectFail);
+          bleService
+            .connectToDevice(device.id)
+            .then(onConnectSuccess)
+            .catch(onConnectFail);
         }}
       />
       <Divider />
     </React.Fragment>
-  )
+  );
 
   return (
     <PaperProvider theme={theme}>
       <ScrollView>
         <View style={styles.container}>
-          <Text variant='headlineMedium'>{'Nearby devices list\n'}</Text>
+          <Text variant="headlineMedium">{'Nearby devices list\n'}</Text>
           <StatusBar style="auto" />
-          {foundDevices.map(item => deviceRender(item))}
+          {foundDevices.map((item) => deviceRender(item))}
           {connectedDevice && connected && (
             <>
-        <TextInput
-      disabled={!connected}
-      label="Characteristic value"
-      value={text}
-      mode={'outlined'}
-      onChangeText={text => setText(text)}
-      style={{marginTop: 20}}
-    />
+              <TextInput
+                disabled={!connected}
+                label="Characteristic value"
+                value={text}
+                mode={'outlined'}
+                onChangeText={(text) => setText(text)}
+                style={{ marginTop: 20 }}
+              />
 
-        <Button contentStyle={{ justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 30}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readIntermediateTemperature}>
-        Read Intermediate Temperature {intermediateTemperatureValue ? ' - ' + intermediateTemperatureValue : ''}
-  </Button>
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 10}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={writeIntermediateTemperature}>
-        Write Intermediate Temperature {text ? '- ' + text : ''}
-  </Button>
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 10}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={monitorIntermediateTemperature}>
-        Monitor Intermediate Temperature
-  </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 30 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readIntermediateTemperature}
+              >
+                Read Intermediate Temperature{' '}
+                {intermediateTemperatureValue
+                  ? ' - ' + intermediateTemperatureValue
+                  : ''}
+              </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 10 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={writeIntermediateTemperature}
+              >
+                Write Intermediate Temperature {text ? '- ' + text : ''}
+              </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 10 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={monitorIntermediateTemperature}
+              >
+                Monitor Intermediate Temperature
+              </Button>
 
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 30}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readTemperatureMeasurement}>
-  Read Temperature Measurement {temperatureMeasurementValue ? ' - ' + temperatureMeasurementValue : ''}
-  </Button>
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 10}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readTemperatureMeasurement}>
-  Read Temperature Measurement {temperatureMeasurementValue ? ' - ' + temperatureMeasurementValue : ''}
-  </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 30 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readTemperatureMeasurement}
+              >
+                Read Temperature Measurement{' '}
+                {temperatureMeasurementValue
+                  ? ' - ' + temperatureMeasurementValue
+                  : ''}
+              </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 10 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readTemperatureMeasurement}
+              >
+                Read Temperature Measurement{' '}
+                {temperatureMeasurementValue
+                  ? ' - ' + temperatureMeasurementValue
+                  : ''}
+              </Button>
 
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 30}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readTemperatureType}>
-  Read Temperature Type {temperatureTypeValue ? ' - ' + temperatureTypeValue : ''}
-  </Button>
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 10}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readTemperatureType}>
-  Read Temperature Type {temperatureTypeValue ? ' - ' + temperatureTypeValue : ''}
-  </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 30 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readTemperatureType}
+              >
+                Read Temperature Type{' '}
+                {temperatureTypeValue ? ' - ' + temperatureTypeValue : ''}
+              </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 10 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readTemperatureType}
+              >
+                Read Temperature Type{' '}
+                {temperatureTypeValue ? ' - ' + temperatureTypeValue : ''}
+              </Button>
 
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 30}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readTemperatureInterval}>
-  Read Temperature Interval {temperatureIntervalValue ? ' - ' + temperatureIntervalValue : ''}
-  </Button>
-  <Button contentStyle={{justifyContent: 'flex-start'}} disabled={!connected} style={{marginTop: 10}} icon={connected ? "check" : 'lock'} mode="outlined" onPress={readTemperatureInterval}>
-  Read Temperature Interval {temperatureIntervalValue ? ' - ' + temperatureIntervalValue : ''}
-  </Button>
-  </>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 30 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readTemperatureInterval}
+              >
+                Read Temperature Interval{' '}
+                {temperatureIntervalValue
+                  ? ' - ' + temperatureIntervalValue
+                  : ''}
+              </Button>
+              <Button
+                contentStyle={{ justifyContent: 'flex-start' }}
+                disabled={!connected}
+                style={{ marginTop: 10 }}
+                icon={connected ? 'check' : 'lock'}
+                mode="outlined"
+                onPress={readTemperatureInterval}
+              >
+                Read Temperature Interval{' '}
+                {temperatureIntervalValue
+                  ? ' - ' + temperatureIntervalValue
+                  : ''}
+              </Button>
+            </>
           )}
         </View>
       </ScrollView>
@@ -234,6 +330,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     // alignItems: 'center',
     justifyContent: 'flex-start',
-
   },
 });

@@ -1,11 +1,15 @@
-import { Characteristic, Device, DeviceId, TransactionId, UUID } from "react-native-ble-plx";
-import { ConcreteConnectedDevice } from "./concrete-connected-device";
-import { Observable } from "rxjs";
+import { Device, UUID } from 'react-native-ble-plx';
+import { ConcreteConnectedDevice } from './concrete-connected-device';
+import { Observable } from 'rxjs';
 
 export interface BLEService {
-    scanDevices(onDeviceFound: (device: Device) => void, UUIDs?: UUID[] | null, legacyScan?: boolean): Promise<void>;
-    connectToDevice(deviceId: string): Promise<ConcreteConnectedDevice>;
-    isDeviceConnected(): Promise<boolean>
+  scanDevices(
+    onDeviceFound: (device: Device) => void,
+    UUIDs?: UUID[] | null,
+    legacyScan?: boolean
+  ): Promise<void>;
+  connectToDevice(deviceId: string): Promise<ConcreteConnectedDevice>;
+  isDeviceConnected(): Promise<boolean>;
 }
 
 export interface ConnectedDevice {
@@ -24,6 +28,4 @@ export interface ConnectedDevice {
   watchIntermediateTemperature(): Observable<string>;
   watchTemperatureMeasurement(): Observable<string>;
   watchTemperatureType(): Observable<string>;
-  watchTemperatureInterval(): Observable<string>;
-
 }
