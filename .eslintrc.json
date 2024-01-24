@@ -1,21 +1,18 @@
 {
-    "env": {
-        "node": true,
-        "es2021": true
-    },
-    "extends": [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:prettier/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaVersion": "latest"
-    },
-    "plugins": [
-        "@typescript-eslint",
-        "react"
-    ],
-    "rules": {
-        "prettier/prettier": "error"
-    }
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "plugins": ["@typescript-eslint", "react"],
+  "rules": {
+    "prettier/prettier": "error"
+  }
 }
